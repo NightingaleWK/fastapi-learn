@@ -1,5 +1,9 @@
-from fastapi import FastAPI
+from typing import Annotated
+
+from fastapi import Body, FastAPI, Query
 from pydantic import BaseModel
+
+app = FastAPI()
 
 
 class Item(BaseModel):
@@ -9,12 +13,21 @@ class Item(BaseModel):
     tax: float | None = None
 
 
-app = FastAPI()
+class User(BaseModel):
+    username: str
+    full_name: str | None = None
 
 
 @app.put("/items/{item_id}")
-async def update_item(item_id: int, item: Item, q: str | None = None):
-    result = {"item_id": item_id, **item.model_dump()}
+async def update_item(
+    *,
+    item_id: int,
+    item: Item,
+    user: User,
+    importance: Annotated[int, Body(gt=0)],
+    q: Annotated[str | None, Query()] = None,
+):
+    results = {"item_id": item_id, "item": item, "user": user, "importance": importance}
     if q:
-        result.update({"q": q})
-    return result
+        results.update({"q": q})
+    return results
